@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 import base64
 import re  # Regular expressions module
 import webbrowser
-from urllib.parse import urlencode, parse_qs
+from urllib.parse import urlencode, parse_qs, quote_plus
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 from dotenv import load_dotenv
@@ -74,19 +74,32 @@ def get_top_tracks(access_token):
     else:
         return []
 
-def construct_base_ug_url(artist, song):
-    artist_formatted = '-'.join(artist.lower().split())
-    song_formatted = '-'.join(song.lower().split())
-    return f"https://www.ultimate-guitar.com/search.php?search_type=title&value={artist_formatted}+{song_formatted}"
+def format_name(name):
+    name = name.lower()
+    name = re.sub(r'\s+', '-', name)  # Replace spaces with hyphens
+    name = re.sub(r'[^\w-]', '', name)  # Remove any special characters
+    return name
 
-def find_exact_ug_url(base_url, song):
+def construct_base_ug_url(artist, track):
+   
+    artist_formatted = quote_plus(artist.lower())
+    track_formatted = quote_plus(track.lower())
+    return f"https://www.ultimate-guitar.com/search.php?search_type=title&value={artist_formatted}%20{track_formatted}"
+
+def find_exact_ug_url(base_url, track, artist):
+    if not base_url.startswith('http://') and not base_url.startswith('https://'):
+        print(f"Invalid URL: {base_url}")
+        return None
+
+    trackFormat = format_name(track)
+    artistFormat = format_name(artist)
     response = requests.get(base_url)
     if response.status_code == 200:
         soup = BeautifulSoup(response.content, 'html.parser')
-        # Use regex to match the song URL pattern
-        regex_pattern = re.compile(rf'href="(https://tabs.ultimate-guitar.com/tab/.+/{song.lower()}-[a-z]+-\d+)"')
+        regex_pattern = re.compile(rf'https://tabs.ultimate-guitar.com/tab/{artistFormat}/{trackFormat}-[a-z-]+-\d+')
+        print(f"regex pattern: {regex_pattern}")
         match = regex_pattern.search(str(soup))
-        return match.group(1) if match else None
+        return match.group(0) if match else None    
     return None
 
 def check_url_exists(url):
@@ -101,13 +114,10 @@ if __name__ == "__main__":
         if access_token:
             top_tracks = get_top_tracks(access_token)
             for track, artist in top_tracks:
-                url = construct_base_ug_url(artist, track)
-                if check_url_exists(url):
+                base_url = construct_base_ug_url(artist, track)
+                url = find_exact_ug_url(base_url, track, artist)
+                if url and check_url_exists(url):
                     webbrowser.open(url)
                     print(f"Opened tab for {track} by {artist}: {url}")
                 else:
                     print(f"Tab not found for {track} by {artist}")
-        else:
-            print("Failed to obtain access token")
-    else:
-        print("Failed to obtain authorization code")
