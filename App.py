@@ -88,7 +88,6 @@ def construct_base_ug_url(artist, track):
 
 def find_exact_ug_url(base_url, track, artist):
     if not base_url.startswith('http://') and not base_url.startswith('https://'):
-        print(f"Invalid URL: {base_url}")
         return None
 
     trackFormat = format_name(track)
@@ -97,7 +96,6 @@ def find_exact_ug_url(base_url, track, artist):
     if response.status_code == 200:
         soup = BeautifulSoup(response.content, 'html.parser')
         regex_pattern = re.compile(rf'https://tabs.ultimate-guitar.com/tab/{artistFormat}/{trackFormat}-[a-z-]+-\d+')
-        print(f"regex pattern: {regex_pattern}")
         match = regex_pattern.search(str(soup))
         return match.group(0) if match else None    
     return None
@@ -109,6 +107,8 @@ def check_url_exists(url):
 # Main execution
 if __name__ == "__main__":
     code = get_auth_code()
+    found_tabs = []
+
     if code:
         access_token = get_access_token(code)
         if access_token:
@@ -117,7 +117,12 @@ if __name__ == "__main__":
                 base_url = construct_base_ug_url(artist, track)
                 url = find_exact_ug_url(base_url, track, artist)
                 if url and check_url_exists(url):
-                    webbrowser.open(url)
-                    print(f"Opened tab for {track} by {artist}: {url}")
-                else:
-                    print(f"Tab not found for {track} by {artist}")
+                    # webbrowser.open(url)
+                    found_tabs.append((artist, track, url))
+
+    print(f"\n{len(found_tabs)} tabs found.\n")
+    if found_tabs:
+        print(f"{'Artist':<20}{'Song':<30}{'URL'}")
+        print('-' * 70)
+        for artist, track, url in found_tabs:
+            print(f"{artist:<20}{track:<30}{url}")
