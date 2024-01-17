@@ -20,7 +20,14 @@ SCOPE = 'user-top-read'
 AUTH_URL = 'https://accounts.spotify.com/authorize'
 TOKEN_URL = 'https://accounts.spotify.com/api/token'
 
+"""
+Opens the Spotify authorization page in the default web browser and retrieves the authorization code.
+
+Returns:
+str: The authorization code, or None if not found.
+"""
 def get_auth_code():
+    
     params = {
         'client_id': CLIENT_ID,
         'response_type': 'code',
@@ -43,7 +50,17 @@ def get_auth_code():
     code = query.get('code')
     return code[0] if code else None
 
+"""
+Retrieves the access token from Spotify API using the authorization code.
+
+Args:
+code (str): The authorization code.
+
+Returns:
+str: The access token, or None if not found.
+"""
 def get_access_token(code):
+    
     auth_str = f'{CLIENT_ID}:{CLIENT_SECRET}'
     b64_auth_str = base64.urlsafe_b64encode(auth_str.encode()).decode()
 
@@ -63,8 +80,18 @@ def get_access_token(code):
         return response.json()['access_token']
     else:
         return None
-    
+
+"""
+Retrieves the user's top tracks from Spotify API.
+
+Args:
+access_token (str): The access token.
+
+Returns:
+list: A list of tuples containing the track name and artist name.
+""" 
 def get_top_tracks(access_token):
+    
     headers = {
         'Authorization': f'Bearer {access_token}'
     }
@@ -73,20 +100,43 @@ def get_top_tracks(access_token):
         return [(track['name'], track['artists'][0]['name']) for track in response.json()['items']]
     else:
         return []
+    
+"""
+Formats the given name by converting it to lowercase, replacing spaces with hyphens, and removing special characters.
 
+Args:
+name (str): The name to be formatted.
+
+Returns:
+str: The formatted name.
+"""
 def format_name(name):
+    
     name = name.lower()
     name = re.sub(r'\s+', '-', name)  # Replace spaces with hyphens
     name = re.sub(r'[^\w-]', '', name)  # Remove any special characters
     return name
 
+"""
+Constructs the base URL for searching the artist and track on Ultimate Guitar.
+
+Returns:
+str: The constructed URL for searching the artist and track on Ultimate Guitar.
+"""
 def construct_base_ug_url(artist, track):
-   
+
     artist_formatted = quote_plus(artist.lower())
     track_formatted = quote_plus(track.lower())
     return f"https://www.ultimate-guitar.com/search.php?search_type=title&value={artist_formatted}%20{track_formatted}"
 
+"""
+Finds the exact URL of a song's tab on Ultimate Guitar website.
+
+Returns:
+str: The exact URL of the song's tab on Ultimate Guitar website, or None if not found.
+"""
 def find_exact_ug_url(base_url, track, artist):
+    
     if not base_url.startswith('http://') and not base_url.startswith('https://'):
         return None
 
@@ -100,7 +150,17 @@ def find_exact_ug_url(base_url, track, artist):
         return match.group(0) if match else None    
     return None
 
+"""
+Checks if the given URL exists by sending a HEAD request.
+
+Args:
+url (str): The URL to check.
+
+Returns:
+bool: True if the URL exists, False otherwise.
+"""
 def check_url_exists(url):
+    
     response = requests.head(url)
     return response.status_code == 200
 
