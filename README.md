@@ -87,3 +87,7 @@ Pink Floyd          Wish You Were Here            https://tabs.ultimate-guitar.c
 - Limited to Top 15 Tracks: Currently, the script only retrieves the top 15 tracks from your Spotify account.
 - Accuracy of Tab Search: The script attempts to find the most accurate tab based on the track and artist name, but the results may not always be perfect.
 - Environment Setup: Make sure to correctly set up your environment variables for the script to work.
+
+## Contributing
+
+Contributions are welcome! Please open an issue or submit a pull request for any changes or improvements.
